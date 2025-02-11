@@ -14,6 +14,7 @@ export default function AddFridgeItemForm({ onItemAdded }) {
         quantity: parseInt(quantity),
         unit,
       });
+      console.log("Item added:", response.data);
       onItemAdded(response.data); // 親コンポーネントに通知
       setName("");
       setQuantity("");
