@@ -1,0 +1,107 @@
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f7f9fc;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  
+  .container {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  h1 {
+    text-align: center;
+    color: #333;
+  }
+  
+  .fridge-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #e3f2fd;
+    padding: 12px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: 0.3s;
+  }
+  
+  .fridge-item:hover {
+    transform: scale(1.02);
+  }
+  
+  .fridge-item div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s, transform 0.2s;
+  }
+  
+  button:hover {
+    transform: scale(1.05);
+  }
+  
+  button:active {
+    transform: scale(0.95);
+  }
+  
+  button.increase {
+    background-color: #28a745;
+    color: white;
+  }
+  
+  button.increase:hover {
+    background-color: #218838;
+  }
+  
+  button.decrease {
+    background-color: #ff4d4d;
+    color: white;
+  }
+  
+  button.decrease:hover {
+    background-color: #cc0000;
+  }
+  
+  button.delete {
+    background-color: #dc3545;
+    color: white;
+  }
+  
+  button.delete:hover {
+    background-color: #c82333;
+  }
+  
+  @media (max-width: 480px) {
+    .container {
+      width: 90%;
+    }
+  
+    .fridge-item {
+      flex-direction: column;
+      text-align: center;
+    }
+  
+    .fridge-item div {
+      justify-content: center;
+      margin-top: 8px;
+    }
+  }
+  
