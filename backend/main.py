@@ -31,21 +31,22 @@ def get_db():
 def read_root():
     return {"message": "Welcome to SmartRecipe API!"}
 
-# ユーザー一覧取得エンドポイント
+# ユーザー一覧取得
 @app.get("/users/", response_model=List[schemas.User])
 def read_users(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     return crud.get_users(db, skip, limit)
 
-# 冷蔵庫の食材一覧取得エンドポイント
+# 冷蔵庫の食材一覧取得
 @app.get("/fridge_items/", response_model=List[schemas.FridgeItem]) 
 def read_fridge_items(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     return crud.get_fridge_items(db, skip, limit)
 
-# 食材を登録するエンドポイント
+# 食材を登録する
 @app.post("/fridge_items/", response_model=schemas.FridgeItem)
 def create_fridge_item(item: schemas.FridgeItemCreate, db: Session = Depends(get_db)):
     return crud.create_fridge_item(db=db, item=item)
 
+# 食材を一つ減らす
 @app.patch("/fridge_items/{item_id}/decrease/")
 def decrease_fridge_item(item_id: int, db: Session = Depends(get_db)):
     """食材の数を1つ減らす"""
@@ -57,3 +58,24 @@ def decrease_fridge_item(item_id: int, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(item)
     return item
+
+# 食材を一つ増やす
+@app.patch("/fridge_items/{item_id}/increase/")
+def increase_quantity(item_id: int, db: Session = Depends(get_db)):
+    db_item = db.query(models.FridgeItem).filter(models.FridgeItem.id == item_id).first()
+    if not db_item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    db_item.quantity += 1
+    db.commit()
+    db.refresh(db_item)
+    return db_item
+
+# 食材を削除
+@app.delete("/fridge_items/{item_id}/")
+def delete_food_item(item_id: int, db: Session = Depends(get_db)):
+    db_item = db.query(models.FridgeItem).filter(models.FridgeItem.id == item_id).first()
+    if not db_item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    db.delete(db_item)
+    db.commit()
+    return {"message": "Item deleted successfully"}
