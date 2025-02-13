@@ -59,4 +59,5 @@ next-env.d.ts
 *.bak
 *.tmp
 
-#SmartRecipe.git/
+__pycache__/
+venv/
