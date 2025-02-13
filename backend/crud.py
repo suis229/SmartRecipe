@@ -19,8 +19,17 @@ def get_users(db: Session, skip: int = 0, limit: int = 10):
 
 # 食材登録
 def create_fridge_item(db: Session, item: schemas.FridgeItemCreate):
-    db_item = models.FridgeItem(name=item.name, quantity=item.quantity, unit=item.unit)
-    db.add(db_item)
+    # 既存の食材を検索
+    db_item = db.query(models.FridgeItem).filter(models.FridgeItem.name == item.name).first()
+
+    if db_item:
+        # 既に存在する場合、数量を合計
+        db_item.quantity += item.quantity
+    else:
+        # 存在しない場合、新規作成
+        db_item = models.FridgeItem(name=item.name, quantity=item.quantity, unit=item.unit)
+        db.add(db_item)
+
     db.commit()
     db.refresh(db_item)
     return db_item
