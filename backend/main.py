@@ -1,14 +1,22 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from database import engine, Base, SessionLocal
 import models, schemas, crud, database
 from typing import List
+from youtube_api import router as youtube_router
+import requests
+import os
 
 # DB 初期化
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
+
+# YouTube動画検索APIを追加
+app.include_router(youtube_router)
 
 # CORS 設定 (フロントエンドとの通信を許可)
 app.add_middleware(
@@ -79,3 +87,26 @@ def delete_food_item(item_id: int, db: Session = Depends(get_db)):
     db.delete(db_item)
     db.commit()
     return {"message": "Item deleted successfully"}
+
+# レシピ検索
+@app.get("/recipes/")
+def get_recipes(ingredients: str = Query(..., description="食材のリスト (カンマ区切り)")):
+    search_query = f"{ingredients} レシピ"
+    youtube_api_url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&q={search_query}&key={YOUTUBE_API_KEY}&maxResults=5&type=video"
+
+    response = requests.get(youtube_api_url)
+    if response.status_code != 200:
+        return {"error": "Failed to fetch videos"}
+
+    video_data = response.json().get("items", [])
+    
+    recipes = [
+        {
+            "title": item["snippet"]["title"],
+            "video_url": f"https://www.youtube.com/watch?v={item['id']['videoId']}",
+            "thumbnail_url": item["snippet"]["thumbnails"]["medium"]["url"]
+        }
+        for item in video_data
+    ]
+
+    return recipes

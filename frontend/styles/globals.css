@@ -1,107 +1,265 @@
 body {
-    font-family: 'Arial', sans-serif;
-    background-color: #f7f9fc;
-    margin: 0;
-    padding: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-  }
-  
+  font-family: 'Arial', sans-serif;
+  background-color: #f7f9fc;
+  margin: 0;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 90vw; /* PCでは画面幅を広く使う */
+  max-width: 1400px; /* PC表示時 */
+  margin: 0 auto;
+}
+
+h1 {
+  text-align: center;
+  color: #333;
+}
+
+/* レシピを検索ボタンを見やすくする */
+.recipe-search-btn {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  margin: 10px auto 20px;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: bold;
+  background-color: #ff9800;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.recipe-search-btn:hover {
+  background-color: #e68900;
+  transform: scale(1.05);
+}
+
+.recipe-search-btn:active {
+  transform: scale(0.95);
+}
+
+/* 食材リスト */
+.fridge-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #e3f2fd;
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: 0.3s;
+}
+
+.fridge-item:hover {
+  transform: scale(1.02);
+}
+
+.fridge-item div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s, transform 0.2s;
+}
+
+button:hover {
+  transform: scale(1.05);
+}
+
+button:active {
+  transform: scale(0.95);
+}
+
+button.increase {
+  background-color: #28a745;
+  color: white;
+}
+
+button.increase:hover {
+  background-color: #218838;
+}
+
+button.decrease {
+  background-color: #ff4d4d;
+  color: white;
+}
+
+button.decrease:hover {
+  background-color: #cc0000;
+}
+
+button.delete {
+  background-color: #dc3545;
+  color: white;
+}
+
+button.delete:hover {
+  background-color: #c82333;
+}
+
+/* PC向けレイアウト調整 */
+@media (max-width: 768px) {
   .container {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    max-width: 400px;
+    width: 90%;
   }
-  
-  h1 {
-    text-align: center;
-    color: #333;
-  }
-  
+
   .fridge-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #e3f2fd;
-    padding: 12px;
-    margin-bottom: 8px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: 0.3s;
+    flex-direction: column;
+    text-align: center;
   }
-  
-  .fridge-item:hover {
-    transform: scale(1.02);
-  }
-  
+
   .fridge-item div {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    justify-content: center;
+    margin-top: 8px;
   }
-  
-  button {
-    padding: 8px 12px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background 0.3s, transform 0.2s;
+
+  .recipe-search-btn {
+    max-width: 200px;
   }
-  
-  button:hover {
-    transform: scale(1.05);
+}
+
+/* PC向けのレイアウト適用 */
+@media (min-width: 1025px) {
+  .fridge-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3列に配置 */
+    gap: 16px;
   }
-  
-  button:active {
-    transform: scale(0.95);
+}
+
+/* タブレット・スマホ向けのレイアウト */
+@media (max-width: 1024px) {
+  .container {
+    width: 95vw;
+    max-width: 800px;
   }
-  
-  button.increase {
-    background-color: #28a745;
-    color: white;
+
+  .fridge-list {
+    display: block;
   }
-  
-  button.increase:hover {
-    background-color: #218838;
+}
+
+.recipes-container {
+  display: grid;
+  gap: 16px;
+  width: 90vw; /* PCでは幅を広く使う */
+  max-width: 1400px; /* PC時の最大幅 */
+  margin: 0 auto;
+}
+
+/* PC表示（3列） */
+@media (min-width: 1025px) {
+  .recipes-container {
+    grid-template-columns: repeat(3, 1fr);
   }
-  
-  button.decrease {
-    background-color: #ff4d4d;
-    color: white;
+}
+
+/* タブレット・スマホ表示（1列） */
+@media (max-width: 1024px) {
+  .recipes-container {
+    grid-template-columns: repeat(1, 1fr);
   }
-  
-  button.decrease:hover {
-    background-color: #cc0000;
+}
+
+.recipe-card {
+  background: white;
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.recipe-card img {
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+
+.recipe-container {
+  width: 90vw;
+  max-width: 1400px; /* PC時の最大幅 */
+  margin: 0 auto;
+  text-align: center;
+}
+
+.recipe-list {
+  display: grid;
+  gap: 16px;
+  padding: 0;
+  list-style: none;
+  justify-content: center;
+}
+
+/* PCでは3列 */
+@media (min-width: 1025px) {
+  .recipe-list {
+    grid-template-columns: repeat(3, 1fr);
   }
-  
-  button.delete {
-    background-color: #dc3545;
-    color: white;
+}
+
+/* スマホ・タブレットでは1列 */
+@media (max-width: 1024px) {
+  .recipe-list {
+    grid-template-columns: repeat(1, 1fr);
   }
-  
-  button.delete:hover {
-    background-color: #c82333;
-  }
-  
-  @media (max-width: 480px) {
-    .container {
-      width: 90%;
-    }
-  
-    .fridge-item {
-      flex-direction: column;
-      text-align: center;
-    }
-  
-    .fridge-item div {
-      justify-content: center;
-      margin-top: 8px;
-    }
-  }
-  
+}
+
+.recipe-item {
+  background: white;
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.recipe-thumbnail {
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+
+.recipe-title-text {
+  font-size: 14px;
+  margin-top: 5px;
+  font-weight: bold;
+}
+
+.loading-text,
+.no-recipes-text {
+  font-size: 18px;
+  color: #666;
+}
+
+.back-btn {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.back-btn:hover {
+  background-color: #45a049;
+}
