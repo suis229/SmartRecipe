@@ -39,9 +39,36 @@ export default function Home() {
     });
   };
 
+  const updateQuantity = async (id, change) => {
+    try {
+      const response = await axios.patch(
+        `http://127.0.0.1:8000/fridge_items/${id}/${change}/`
+      );
+      setItems((prevItems) =>
+        prevItems.map((item) =>
+          item.id === id ? { ...item, quantity: response.data.quantity } : item
+        )
+      );
+    } catch (error) {
+      console.error("Error updating quantity:", error);
+    }
+  };
+
+  const deleteItem = async (id) => {
+    try {
+      await axios.delete(`http://127.0.0.1:8000/fridge_items/${id}/`);
+      setItems((prevItems) => prevItems.filter((item) => item.id !== id));
+    } catch (error) {
+      console.error("Error deleting item:", error);
+    }
+  };
+
   return (
     <div className="container">
       <h1>冷蔵庫管理</h1>
+      <button className="search-btn" onClick={handleSearchRecipes} disabled={loading}>
+        {loading ? "検索中..." : "レシピを検索"}
+      </button>
       
       <div className="ingredients-selection">
         <h2>検索に使用する食材</h2>
@@ -57,15 +84,14 @@ export default function Home() {
         ))}
       </div>
 
-      <button className="search-btn" onClick={handleSearchRecipes} disabled={loading}>
-        {loading ? "検索中..." : "レシピを検索"}
-      </button>
-
       <h2>現在の食材</h2>
       <ul>
         {items.map((item) => (
-          <li key={item.id}>
+          <li key={item.id} className="item">
             {item.name} - {item.quantity} {item.unit}
+            <button onClick={() => updateQuantity(item.id, "increase")} className="btn">＋</button>
+            <button onClick={() => updateQuantity(item.id, "decrease")} className="btn">－</button>
+            <button onClick={() => deleteItem(item.id)} className="btn delete">削除</button>
           </li>
         ))}
       </ul>
