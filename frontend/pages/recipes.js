@@ -10,10 +10,10 @@ const Recipes = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (ingredients) {
+    if (router.query.ingredients) {
       fetchRecipes();
     }
-  }, [ingredients]);
+  }, [router.query]);  
 
   const fetchRecipes = async () => {
     try {

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import AddFridgeItemForm from "../components/AddFridgeItemForm";
+import FridgeItem from "../components/FridgeItem";
 import { useRouter } from "next/router";
 import "../styles/globals.css";
 
-export default function Home() {
+const FridgeManagement = () => {
   const [items, setItems] = useState([]);
-  const [selectedIngredients, setSelectedIngredients] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // 検索中の状態
+  const [selectedItems, setSelectedItems] = useState([]); // 検索対象の食材
   const router = useRouter();
 
   useEffect(() => {
@@ -17,84 +19,70 @@ export default function Home() {
     try {
       const response = await axios.get("http://127.0.0.1:8000/fridge_items/");
       setItems(response.data);
-      setSelectedIngredients(response.data.map((item) => item.name)); // デフォルトで全選択
     } catch (error) {
       console.error("Error fetching items:", error);
     }
   };
 
-  const toggleIngredient = (ingredient) => {
-    setSelectedIngredients((prevSelected) =>
-      prevSelected.includes(ingredient)
-        ? prevSelected.filter((i) => i !== ingredient)
-        : [...prevSelected, ingredient]
+  const updateItem = (updatedItem) => {
+    setItems((prevItems) =>
+      prevItems.map((item) => (item.id === updatedItem.id ? updatedItem : item))
     );
   };
 
-  const handleSearchRecipes = () => {
-    setLoading(true);
-    router.push({
-      pathname: "/recipes",
-      query: { ingredients: selectedIngredients.join(",") },
-    });
+  const deleteItem = (itemId) => {
+    setItems((prevItems) => prevItems.filter((item) => item.id !== itemId));
   };
 
-  const updateQuantity = async (id, change) => {
-    try {
-      const response = await axios.patch(
-        `http://127.0.0.1:8000/fridge_items/${id}/${change}/`
-      );
-      setItems((prevItems) =>
-        prevItems.map((item) =>
-          item.id === id ? { ...item, quantity: response.data.quantity } : item
-        )
-      );
-    } catch (error) {
-      console.error("Error updating quantity:", error);
-    }
+  const handleSelectItem = (itemName) => {
+    setSelectedItems((prev) =>
+      prev.includes(itemName)
+        ? prev.filter((name) => name !== itemName)
+        : [...prev, itemName]
+    );
   };
 
-  const deleteItem = async (id) => {
+  const handleSearchRecipes = async () => {
+    setLoading(true); // 検索中の状態をON
     try {
-      await axios.delete(`http://127.0.0.1:8000/fridge_items/${id}/`);
-      setItems((prevItems) => prevItems.filter((item) => item.id !== id));
+      const ingredients = selectedItems.length > 0 ? selectedItems.join(",") : items.map((item) => item.name).join(",");
+      await axios.get(`http://127.0.0.1:8000/recipes/?ingredients=${ingredients}`);
+      router.push(`/recipes?ingredients=${encodeURIComponent(ingredients)}`); // クエリパラメータを追加
     } catch (error) {
-      console.error("Error deleting item:", error);
+      console.error("Error fetching recipes:", error);
+    } finally {
+      setLoading(false);
     }
-  };
+  };  
 
   return (
     <div className="container">
-      <h1>冷蔵庫管理</h1>
-      <button className="search-btn" onClick={handleSearchRecipes} disabled={loading}>
-        {loading ? "検索中..." : "レシピを検索"}
-      </button>
-      
-      <div className="ingredients-selection">
-        <h2>検索に使用する食材</h2>
+      <h1>冷蔵庫の管理</h1>
+  
+      {/* PCでもスマホでも適切な位置にボタンを配置 */}
+      {loading ? (
+        <p className="loading-text">レシピを検索中...</p>
+      ) : (
+        <button className="recipe-search-btn" onClick={handleSearchRecipes}>
+          レシピを検索
+        </button>
+      )}
+  
+      <AddFridgeItemForm setItems={setItems} />
+      <ul className="fridge-list">
         {items.map((item) => (
-          <label key={item.name} className="ingredient-checkbox">
+          <li key={item.id} className="fridge-item">
             <input
               type="checkbox"
-              checked={selectedIngredients.includes(item.name)}
-              onChange={() => toggleIngredient(item.name)}
+              checked={selectedItems.includes(item.name)}
+              onChange={() => handleSelectItem(item.name)}
             />
-            {item.name}
-          </label>
-        ))}
-      </div>
-
-      <h2>現在の食材</h2>
-      <ul>
-        {items.map((item) => (
-          <li key={item.id} className="item">
-            {item.name} - {item.quantity} {item.unit}
-            <button onClick={() => updateQuantity(item.id, "increase")} className="btn">＋</button>
-            <button onClick={() => updateQuantity(item.id, "decrease")} className="btn">－</button>
-            <button onClick={() => deleteItem(item.id)} className="btn delete">削除</button>
+            <FridgeItem item={item} onUpdate={updateItem} onDelete={deleteItem} />
           </li>
         ))}
       </ul>
     </div>
-  );
-}
+  );  
+};
+
+export default FridgeManagement;
