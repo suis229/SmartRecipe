@@ -1,21 +1,33 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 
-export default function AddFridgeItemForm({ onItemAdded }) {
+const AddFridgeItemForm = ({ items, setItems }) => {
   const [name, setName] = useState("");
   const [quantity, setQuantity] = useState("");
   const [unit, setUnit] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
       const response = await axios.post("http://127.0.0.1:8000/fridge_items/", {
         name,
         quantity: parseInt(quantity),
         unit,
       });
-      console.log("Item added:", response.data);
-      onItemAdded(response.data); // 親コンポーネントに通知
+
+      setItems((prevItems) => {
+        const existingItem = prevItems.find(item => item.name === response.data.name);
+        if (existingItem) {
+          return prevItems.map(item =>
+            item.name === response.data.name
+              ? { ...item, quantity: item.quantity + parseInt(quantity) }
+              : item
+          );
+        }
+        return [...prevItems, response.data];
+      });
+
       setName("");
       setQuantity("");
       setUnit("");
@@ -25,35 +37,13 @@ export default function AddFridgeItemForm({ onItemAdded }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-4 border rounded">
-      <h2 className="text-xl font-bold mb-2">食材を追加</h2>
-      <input
-        type="text"
-        placeholder="食材名"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        className="block w-full p-2 border mb-2"
-        required
-      />
-      <input
-        type="number"
-        placeholder="数量"
-        value={quantity}
-        onChange={(e) => setQuantity(e.target.value)}
-        className="block w-full p-2 border mb-2"
-        required
-      />
-      <input
-        type="text"
-        placeholder="単位 (g, ml, 個)"
-        value={unit}
-        onChange={(e) => setUnit(e.target.value)}
-        className="block w-full p-2 border mb-2"
-        required
-      />
-      <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
-        追加
-      </button>
+    <form onSubmit={handleSubmit}>
+      <input type="text" placeholder="食材名" value={name} onChange={(e) => setName(e.target.value)} required />
+      <input type="number" placeholder="数量" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
+      <input type="text" placeholder="単位" value={unit} onChange={(e) => setUnit(e.target.value)} required />
+      <button type="submit">追加</button>
     </form>
   );
-}
+};
+
+export default AddFridgeItemForm;

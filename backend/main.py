@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from database import engine, Base, SessionLocal
@@ -45,3 +45,15 @@ def read_fridge_items(skip: int = 0, limit: int = 10, db: Session = Depends(get_
 @app.post("/fridge_items/", response_model=schemas.FridgeItem)
 def create_fridge_item(item: schemas.FridgeItemCreate, db: Session = Depends(get_db)):
     return crud.create_fridge_item(db=db, item=item)
+
+@app.patch("/fridge_items/{item_id}/decrease/")
+def decrease_fridge_item(item_id: int, db: Session = Depends(get_db)):
+    """食材の数を1つ減らす"""
+    item = db.query(models.FridgeItem).filter(models.FridgeItem.id == item_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    if item.quantity > 0:
+        item.quantity -= 1
+        db.commit()
+        db.refresh(item)
+    return item

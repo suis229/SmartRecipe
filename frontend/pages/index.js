@@ -1,14 +1,10 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import AddFridgeItemForm from "../components/AddFridgeItemForm";
+import FridgeItem from "../components/FridgeItem";
 
-export default function Home() {
+const App = () => {
   const [items, setItems] = useState([]);
-
-  // 食材一覧を取得
-  useEffect(() => {
-    fetchItems();
-  }, []);
 
   const fetchItems = async () => {
     try {
@@ -19,22 +15,29 @@ export default function Home() {
     }
   };
 
-  const handleItemAdded = () => {
-    fetchItems(); // 新しい食材を追加したらリストを更新
+  useEffect(() => {
+    fetchItems();
+  }, []);
+
+  const handleUpdate = (updatedItem) => {
+    setItems(prevItems =>
+      prevItems.map(item =>
+        item.id === updatedItem.id ? updatedItem : item
+      )
+    );
   };
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">冷蔵庫の食材管理</h1>
-      <AddFridgeItemForm onItemAdded={handleItemAdded} />
-      <h2 className="text-xl font-bold mt-6">現在の食材</h2>
-      <ul className="mt-2">
-        {items.map((item) => (
-          <li key={item.id} className="p-2 border-b">
-            {item.name} - {item.quantity} {item.unit}
-          </li>
+    <div>
+      <h1>冷蔵庫の食材</h1>
+      <AddFridgeItemForm onAdd={fetchItems} />
+      <div>
+        {items.map(item => (
+          <FridgeItem key={item.id} item={item} onUpdate={handleUpdate} />
         ))}
-      </ul>
+      </div>
     </div>
   );
-}
+};
+
+export default App;
