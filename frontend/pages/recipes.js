@@ -1,36 +1,21 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { useRouter } from "next/router";
-import "../styles/globals.css";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
-const RecipeSearch = () => {
-  const [recipes, setRecipes] = useState([]);
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+const Recipes = () => {
   const router = useRouter();
+  const { ingredients } = router.query;
+  const [recipes, setRecipes] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchItems();
-  }, []);
-
-  useEffect(() => {
-    if (items.length > 0) {
+    if (ingredients) {
       fetchRecipes();
     }
-  }, [items]);
-
-  const fetchItems = async () => {
-    try {
-      const response = await axios.get("http://127.0.0.1:8000/fridge_items/");
-      setItems(response.data);
-    } catch (error) {
-      console.error("Error fetching items:", error);
-    }
-  };
+  }, [ingredients]);
 
   const fetchRecipes = async () => {
     try {
-      const ingredients = items.map((item) => item.name).join(",");
       const response = await axios.get(`http://127.0.0.1:8000/recipes/?ingredients=${ingredients}`);
       setRecipes(response.data);
     } catch (error) {
@@ -70,4 +55,4 @@ const RecipeSearch = () => {
   );
 };
 
-export default RecipeSearch;
+export default Recipes;

@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import AddFridgeItemForm from "../components/AddFridgeItemForm";
-import FridgeItem from "../components/FridgeItem";
 import { useRouter } from "next/router";
-import "../styles/globals.css";
 
-const FridgeManagement = () => {
+export default function Home() {
   const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(false); // 検索中の状態
+  const [selectedIngredients, setSelectedIngredients] = useState([]);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -18,55 +16,58 @@ const FridgeManagement = () => {
     try {
       const response = await axios.get("http://127.0.0.1:8000/fridge_items/");
       setItems(response.data);
+      setSelectedIngredients(response.data.map((item) => item.name)); // デフォルトで全選択
     } catch (error) {
       console.error("Error fetching items:", error);
     }
   };
 
-  const updateItem = (updatedItem) => {
-    setItems((prevItems) =>
-      prevItems.map((item) => (item.id === updatedItem.id ? updatedItem : item))
+  const toggleIngredient = (ingredient) => {
+    setSelectedIngredients((prevSelected) =>
+      prevSelected.includes(ingredient)
+        ? prevSelected.filter((i) => i !== ingredient)
+        : [...prevSelected, ingredient]
     );
   };
 
-  const deleteItem = (itemId) => {
-    setItems((prevItems) => prevItems.filter((item) => item.id !== itemId));
-  };
-
-  const handleSearchRecipes = async () => {
-    setLoading(true); // 検索中の状態をON
-    try {
-      const ingredients = items.map((item) => item.name).join(",");
-      await axios.get(`http://127.0.0.1:8000/recipes/?ingredients=${ingredients}`);
-      router.push("/recipes"); // 検索が終わったらレシピページへ遷移
-    } catch (error) {
-      console.error("Error fetching recipes:", error);
-    } finally {
-      setLoading(false);
-    }
+  const handleSearchRecipes = () => {
+    setLoading(true);
+    router.push({
+      pathname: "/recipes",
+      query: { ingredients: selectedIngredients.join(",") },
+    });
   };
 
   return (
     <div className="container">
-      <h1>冷蔵庫の管理</h1>
-  
-      {/* PCでもスマホでも適切な位置にボタンを配置 */}
-      {loading ? (
-        <p className="loading-text">レシピを検索中...</p>
-      ) : (
-        <button className="recipe-search-btn" onClick={handleSearchRecipes}>
-          レシピを検索
-        </button>
-      )}
-  
-      <AddFridgeItemForm setItems={setItems} />
-      <ul className="fridge-list">
+      <h1>冷蔵庫管理</h1>
+      
+      <div className="ingredients-selection">
+        <h2>検索に使用する食材</h2>
         {items.map((item) => (
-          <FridgeItem key={item.id} item={item} onUpdate={updateItem} onDelete={deleteItem} />
+          <label key={item.name} className="ingredient-checkbox">
+            <input
+              type="checkbox"
+              checked={selectedIngredients.includes(item.name)}
+              onChange={() => toggleIngredient(item.name)}
+            />
+            {item.name}
+          </label>
+        ))}
+      </div>
+
+      <button className="search-btn" onClick={handleSearchRecipes} disabled={loading}>
+        {loading ? "検索中..." : "レシピを検索"}
+      </button>
+
+      <h2>現在の食材</h2>
+      <ul>
+        {items.map((item) => (
+          <li key={item.id}>
+            {item.name} - {item.quantity} {item.unit}
+          </li>
         ))}
       </ul>
     </div>
-  );  
-};
-
-export default FridgeManagement;
+  );
+}

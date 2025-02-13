@@ -1,33 +1,24 @@
-<<<<<<< HEAD
-from fastapi import FastAPI, Depends, HTTPException
-=======
 from fastapi import FastAPI, Depends, HTTPException, Query
->>>>>>> a4ba21ed061a6b35a6a5b3de9caab3f0d0819c05
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from database import engine, Base, SessionLocal
 import models, schemas, crud, database
 from typing import List
-<<<<<<< HEAD
-=======
 from youtube_api import router as youtube_router
 import requests
 import os
->>>>>>> a4ba21ed061a6b35a6a5b3de9caab3f0d0819c05
 
 # DB 初期化
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-<<<<<<< HEAD
-=======
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
 
 # YouTube動画検索APIを追加
 app.include_router(youtube_router)
 
->>>>>>> a4ba21ed061a6b35a6a5b3de9caab3f0d0819c05
+
 # CORS 設定 (フロントエンドとの通信を許可)
 app.add_middleware(
     CORSMiddleware,
@@ -97,8 +88,6 @@ def delete_food_item(item_id: int, db: Session = Depends(get_db)):
     db.delete(db_item)
     db.commit()
     return {"message": "Item deleted successfully"}
-<<<<<<< HEAD
-=======
 
 # レシピ検索
 @app.get("/recipes/")
@@ -122,4 +111,4 @@ def get_recipes(ingredients: str = Query(..., description="食材のリスト (�
     ]
 
     return recipes
->>>>>>> a4ba21ed061a6b35a6a5b3de9caab3f0d0819c05
+
