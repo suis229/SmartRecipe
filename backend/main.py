@@ -3,10 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from database import engine, Base, SessionLocal
 import models, schemas, crud, database
-from typing import List
+from typing import List, Optional
 from youtube_api import router as youtube_router
 import requests
 import os
+import logging
 
 # DB 初期化
 models.Base.metadata.create_all(bind=engine)
@@ -18,6 +19,9 @@ YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
 # YouTube動画検索APIを追加
 app.include_router(youtube_router)
 
+# ログ設定
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # CORS 設定 (フロントエンドとの通信を許可)
 app.add_middleware(
@@ -91,16 +95,42 @@ def delete_food_item(item_id: int, db: Session = Depends(get_db)):
 
 # レシピ検索
 @app.get("/recipes/")
-def get_recipes(ingredients: str = Query(..., description="食材のリスト (カンマ区切り)")):
-    search_query = f"{ingredients} レシピ"
-    youtube_api_url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&q={search_query}&key={YOUTUBE_API_KEY}&maxResults=5&type=video"
+def get_recipes(
+    ingredients: Optional[List[str]] = Query(None, description="食材リスト (複数指定可能)"),
+    keywords: Optional[str] = Query(None, description="検索キーワード"),
+):
+    # 🔹 受け取ったパラメータをログに記録
+    logger.info(f"Received request: ingredients={ingredients}, keywords={keywords}")
+
+    # 🔹 ingredientsがNoneの場合、空リストにする
+    if ingredients is None:
+        ingredients = []
+
+    # 🔹 keywordsがNoneの場合、空文字にする
+    if not keywords:
+        keywords = ""
+
+    # 🔹 クエリを組み立てる
+    query_parts = [keywords] if keywords else []
+    if ingredients:
+        query_parts.append(" ".join(ingredients))  # 食材リストをスペース区切りで結合
+
+    if not query_parts:
+        raise HTTPException(status_code=400, detail="検索キーワードまたは食材を指定してください。")
+
+    search_query = " ".join(query_parts) + " レシピ"
+    logger.info(f"Final search query: {search_query}")
+
+    youtube_api_url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&q={search_query}&key={YOUTUBE_API_KEY}&maxResults=10&type=video"
 
     response = requests.get(youtube_api_url)
     if response.status_code != 200:
+        logger.error(f"Failed to fetch videos. Status Code: {response.status_code}, Response: {response.text}")
         return {"error": "Failed to fetch videos"}
 
     video_data = response.json().get("items", [])
-    
+    logger.info(f"Fetched {len(video_data)} videos.")
+
     recipes = [
         {
             "title": item["snippet"]["title"],
@@ -111,4 +141,3 @@ def get_recipes(ingredients: str = Query(..., description="食材のリスト (�
     ]
 
     return recipes
-
