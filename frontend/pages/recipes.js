@@ -1,6 +1,7 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import "../styles/globals.css";
 
 const Recipes = () => {
   const router = useRouter();

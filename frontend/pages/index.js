@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useRouter } from "next/router";
+import "../styles/globals.css";
 
 export default function Home() {
   const [items, setItems] = useState([]);

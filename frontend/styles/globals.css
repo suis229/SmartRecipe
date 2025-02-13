@@ -8,13 +8,14 @@ body {
   align-items: center;
 }
 
+/* PC向けのレイアウト調整 */
 .container {
   background: white;
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   width: 90vw; /* PCでは画面幅を広く使う */
-  max-width: 1400px; /* PC表示時 */
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -23,7 +24,7 @@ h1 {
   color: #333;
 }
 
-/* レシピを検索ボタンを見やすくする */
+/* レシピ検索ボタン */
 .recipe-search-btn {
   display: block;
   width: 100%;
@@ -50,6 +51,34 @@ h1 {
 }
 
 /* 食材リスト */
+.fridge-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding: 0;
+  list-style: none;
+}
+
+/* PC向けレイアウト */
+@media (min-width: 1025px) {
+  .fridge-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* スマホ・タブレット向け */
+@media (max-width: 1024px) {
+  .container {
+    width: 95vw;
+    max-width: 800px;
+  }
+  
+  .fridge-list {
+    display: block;
+  }
+}
+
+/* 食材アイテム */
 .fridge-item {
   display: flex;
   justify-content: space-between;
@@ -116,53 +145,12 @@ button.delete:hover {
   background-color: #c82333;
 }
 
-/* PC向けレイアウト調整 */
-@media (max-width: 768px) {
-  .container {
-    width: 90%;
-  }
-
-  .fridge-item {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .fridge-item div {
-    justify-content: center;
-    margin-top: 8px;
-  }
-
-  .recipe-search-btn {
-    max-width: 200px;
-  }
-}
-
-/* PC向けのレイアウト適用 */
-@media (min-width: 1025px) {
-  .fridge-list {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3列に配置 */
-    gap: 16px;
-  }
-}
-
-/* タブレット・スマホ向けのレイアウト */
-@media (max-width: 1024px) {
-  .container {
-    width: 95vw;
-    max-width: 800px;
-  }
-
-  .fridge-list {
-    display: block;
-  }
-}
-
+/* レシピページのレイアウト修正 */
 .recipes-container {
   display: grid;
   gap: 16px;
-  width: 90vw; /* PCでは幅を広く使う */
-  max-width: 1400px; /* PC時の最大幅 */
+  width: 90vw;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -196,7 +184,7 @@ button.delete:hover {
 
 .recipe-container {
   width: 90vw;
-  max-width: 1400px; /* PC時の最大幅 */
+  max-width: 1400px;
   margin: 0 auto;
   text-align: center;
 }
@@ -264,6 +252,7 @@ button.delete:hover {
   background-color: #45a049;
 }
 
+/* レシピ検索時の食材選択 */
 .ingredients-selection {
   margin-bottom: 20px;
   display: flex;
