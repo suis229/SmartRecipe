@@ -22,3 +22,16 @@ class FridgeItem(FridgeItemCreate):
 
     class Config:
         orm_mode = True
+
+# お気に入りレシピのスキーマを追加
+class FavoriteRecipeCreate(BaseModel):
+    title: str
+    video_url: str
+    thumbnail_url: str
+
+class FavoriteRecipe(FavoriteRecipeCreate):
+    id: int
+    user_id: int
+
+    class Config:
+        orm_mode = True

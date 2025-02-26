@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, Query
+from fastapi import FastAPI, Depends, HTTPException, Query, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from database import engine, Base, SessionLocal
@@ -8,6 +8,8 @@ from youtube_api import router as youtube_router
 import requests
 import os
 import logging
+from routes.favorites import router as favorites_router
+from routes import router
 
 # DB 初期化
 models.Base.metadata.create_all(bind=engine)
@@ -18,6 +20,8 @@ YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
 
 # YouTube動画検索APIを追加
 app.include_router(youtube_router)
+
+app.include_router(favorites_router, prefix="/favorites", tags=["favorites"])
 
 # ログ設定
 logging.basicConfig(level=logging.INFO)
@@ -99,18 +103,18 @@ def get_recipes(
     ingredients: Optional[List[str]] = Query(None, description="食材リスト (複数指定可能)"),
     keywords: Optional[str] = Query(None, description="検索キーワード"),
 ):
-    # 🔹 受け取ったパラメータをログに記録
+    # 受け取ったパラメータをログに記録
     logger.info(f"Received request: ingredients={ingredients}, keywords={keywords}")
 
-    # 🔹 ingredientsがNoneの場合、空リストにする
+    # ingredientsがNoneの場合、空リストにする
     if ingredients is None:
         ingredients = []
 
-    # 🔹 keywordsがNoneの場合、空文字にする
+    # keywordsがNoneの場合、空文字にする
     if not keywords:
         keywords = ""
 
-    # 🔹 クエリを組み立てる
+    # クエリを組み立てる
     query_parts = [keywords] if keywords else []
     if ingredients:
         query_parts.append(" ".join(ingredients))  # 食材リストをスペース区切りで結合
@@ -141,3 +145,23 @@ def get_recipes(
     ]
 
     return recipes
+
+router = APIRouter()
+
+@router.post("/favorites/")
+def add_favorite(video_url: str, title: str, thumbnail_url: str, db: Session = Depends(database.get_db)):
+    existing_favorite = db.query(models.Favorite).filter(models.Favorite.video_url == video_url).first()
+    if existing_favorite:
+        raise HTTPException(status_code=400, detail="Already in favorites")
+    return crud.add_favorite(db, video_url, title, thumbnail_url)
+
+@router.get("/favorites/")
+def get_favorites(db: Session = Depends(database.get_db)):
+    return crud.get_favorites(db)
+
+@router.delete("/favorites/{video_url}")
+def remove_favorite(video_url: str, db: Session = Depends(database.get_db)):
+    favorite = crud.remove_favorite(db, video_url)
+    if not favorite:
+        raise HTTPException(status_code=404, detail="Not found")
+    return {"message": "Favorite removed"}
