@@ -1,9 +1,8 @@
 from sqlalchemy.orm import Session
 import models, schemas
-
-from sqlalchemy.orm import Session
 from models import FavoriteRecipe
 from schemas import FavoriteRecipeCreate
+from fastapi import HTTPException
 
 # ユーザー作成
 def create_user(db: Session, user: schemas.UserCreate):
@@ -52,34 +51,43 @@ def add_favorite(db: Session, video_url: str, title: str, thumbnail_url: str):
 def get_favorites(db: Session):
     return db.query(models.Favorite).all()
 
-def remove_favorite(db: Session, video_url: str):
-    favorite = db.query(models.Favorite).filter(models.Favorite.video_url == video_url).first()
+def delete_favorite_recipe(db: Session, user_id: int, video_url: str):
+    favorite = db.query(models.FavoriteRecipe).filter(
+        models.FavoriteRecipe.video_url == video_url,
+        models.FavoriteRecipe.user_id == user_id
+    ).first()
+
     if favorite:
         db.delete(favorite)
         db.commit()
-    return favorite
+        return {"message": "Favorite removed successfully"}
+    
+    raise HTTPException(status_code=404, detail="Favorite not found")
 
-def add_favorite_recipe(db: Session, recipe: FavoriteRecipeCreate, user_id: int):
-    db_recipe = FavoriteRecipe(
-        title=recipe.title,
-        video_url=recipe.video_url,
-        thumbnail_url=recipe.thumbnail_url,
-        user_id=user_id
-    )
-    db.add(db_recipe)
-    db.commit()
-    db.refresh(db_recipe)
-    return db_recipe
 
+# 指定ユーザーのお気に入りレシピ一覧を取得
 def get_favorite_recipes(db: Session, user_id: int):
-    return db.query(FavoriteRecipe).filter(FavoriteRecipe.user_id == user_id).all()
+    return db.query(models.FavoriteRecipe).filter(models.FavoriteRecipe.user_id == user_id).all()
 
-def delete_favorite_recipe(db: Session, recipe_id: int, user_id: int):
-    db_recipe = db.query(FavoriteRecipe).filter(
-        FavoriteRecipe.id == recipe_id, FavoriteRecipe.user_id == user_id
+# お気に入りレシピを追加
+def add_favorite_recipe(db: Session, favorite: schemas.FavoriteRecipeCreate, user_id: int):
+    existing_favorite = db.query(models.Favorite).filter(
+        models.Favorite.video_url == favorite.video_url,
+        models.Favorite.user_id == user_id
     ).first()
-    if db_recipe:
-        db.delete(db_recipe)
-        db.commit()
-        return True
-    return False
+
+    if existing_favorite:
+        raise HTTPException(status_code=400, detail="This recipe is already in favorites.")
+
+    db_favorite = models.Favorite(
+        user_id=user_id,
+        title=favorite.title,
+        video_url=favorite.video_url,
+        thumbnail_url=favorite.thumbnail_url
+    )
+
+    db.add(db_favorite)
+    db.commit()
+    db.refresh(db_favorite)
+    return db_favorite
+

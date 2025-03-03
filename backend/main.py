@@ -8,8 +8,8 @@ from youtube_api import router as youtube_router
 import requests
 import os
 import logging
-from routes.favorites import router as favorites_router
-from routes import router
+from routes.favorite_recipes import router as favorite_recipes_router
+from routes import router, favorite_recipes
 
 # DB 初期化
 models.Base.metadata.create_all(bind=engine)
@@ -21,7 +21,8 @@ YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
 # YouTube動画検索APIを追加
 app.include_router(youtube_router)
 
-app.include_router(favorites_router, prefix="/favorites", tags=["favorites"])
+# お気に入りルートを追加
+app.include_router(favorite_recipes_router)
 
 # ログ設定
 logging.basicConfig(level=logging.INFO)
@@ -100,40 +101,23 @@ def delete_food_item(item_id: int, db: Session = Depends(get_db)):
 # レシピ検索
 @app.get("/recipes/")
 def get_recipes(
-    ingredients: Optional[List[str]] = Query(None, description="食材リスト (複数指定可能)"),
-    keywords: Optional[str] = Query(None, description="検索キーワード"),
+    ingredients: str = Query(None, alias="ingredients"),
+    keywords: str = Query(None, alias="keywords")
 ):
-    # 受け取ったパラメータをログに記録
-    logger.info(f"Received request: ingredients={ingredients}, keywords={keywords}")
+    # クエリパラメータが1つもない場合、デフォルトの検索ワードを適用
+    if not ingredients and not keywords:
+        keywords = "レシピ"
+    
+    search_query = f"{keywords or ''} {ingredients or ''} レシピ".strip()
 
-    # ingredientsがNoneの場合、空リストにする
-    if ingredients is None:
-        ingredients = []
-
-    # keywordsがNoneの場合、空文字にする
-    if not keywords:
-        keywords = ""
-
-    # クエリを組み立てる
-    query_parts = [keywords] if keywords else []
-    if ingredients:
-        query_parts.append(" ".join(ingredients))  # 食材リストをスペース区切りで結合
-
-    if not query_parts:
-        raise HTTPException(status_code=400, detail="検索キーワードまたは食材を指定してください。")
-
-    search_query = " ".join(query_parts) + " レシピ"
-    logger.info(f"Final search query: {search_query}")
-
+    # YouTube API で動画検索
     youtube_api_url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&q={search_query}&key={YOUTUBE_API_KEY}&maxResults=10&type=video"
-
+    
     response = requests.get(youtube_api_url)
     if response.status_code != 200:
-        logger.error(f"Failed to fetch videos. Status Code: {response.status_code}, Response: {response.text}")
         return {"error": "Failed to fetch videos"}
 
     video_data = response.json().get("items", [])
-    logger.info(f"Fetched {len(video_data)} videos.")
 
     recipes = [
         {
@@ -145,6 +129,7 @@ def get_recipes(
     ]
 
     return recipes
+
 
 router = APIRouter()
 

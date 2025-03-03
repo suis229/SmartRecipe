@@ -6,10 +6,10 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, nullable=False)
+    email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
 
-    favorites = relationship("FavoriteRecipe", back_populates="user")
+    favorite_recipes = relationship("FavoriteRecipe", back_populates="user")
 
 class FridgeItem(Base):
     __tablename__ = "fridge_items"
@@ -28,15 +28,19 @@ class Favorite(Base):
     video_url = Column(String, unique=True, index=True, nullable=False)
     title = Column(String, nullable=False)
     thumbnail_url = Column(String, nullable=False)
-    user_id = Column(Integer, nullable=False) 
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+
+    user = relationship("User")
+
     
 class FavoriteRecipe(Base):
     __tablename__ = "favorite_recipes"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     title = Column(String, nullable=False)
-    video_url = Column(String, nullable=False, unique=True)
+    video_url = Column(String, nullable=False)
     thumbnail_url = Column(String, nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
-    user = relationship("User", back_populates="favorites")
+    # ユーザーとのリレーション（ユーザーが存在する場合）
+    user = relationship("User", back_populates="favorite_recipes")

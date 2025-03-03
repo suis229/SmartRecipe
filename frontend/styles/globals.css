@@ -282,3 +282,62 @@ button.delete:hover {
   background-color: gray;
   cursor: not-allowed;
 }
+
+.favorite-btn {
+  background-color: #ffdd57;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-top: 5px;
+  width: 100%;
+}
+
+.favorite-btn.favorited {
+  background-color: #ffcc00;
+}
+
+/* お気に入り一覧のレイアウト修正 */
+.favorites-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* PC画面では3列にする */
+  gap: 16px;
+  width: 90vw;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* スマホ・タブレットでは1列表示 */
+@media (max-width: 1024px) {
+  .favorites-container {
+    grid-template-columns: repeat(1, 1fr);
+  }
+}
+
+/* お気に入りアイテムのスタイル */
+.favorite-item {
+  background: white;
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  transition: transform 0.3s ease-in-out;
+}
+
+.favorite-item:hover {
+  transform: scale(1.05);
+}
+
+.favorite-item img {
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+
+.favorite-item-title {
+  font-size: 14px;
+  margin-top: 5px;
+  font-weight: bold;
+}
+
