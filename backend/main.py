@@ -1,12 +1,15 @@
-from fastapi import FastAPI, Depends, HTTPException, Query
+from fastapi import FastAPI, Depends, HTTPException, Query, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from database import engine, Base, SessionLocal
 import models, schemas, crud, database
-from typing import List
+from typing import List, Optional
 from youtube_api import router as youtube_router
 import requests
 import os
+import logging
+from routes.favorite_recipes import router as favorite_recipes_router
+from routes import router, favorite_recipes
 
 # DB 初期化
 models.Base.metadata.create_all(bind=engine)
@@ -18,6 +21,12 @@ YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
 # YouTube動画検索APIを追加
 app.include_router(youtube_router)
 
+# お気に入りルートを追加
+app.include_router(favorite_recipes_router)
+
+# ログ設定
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # CORS 設定 (フロントエンドとの通信を許可)
 app.add_middleware(
@@ -91,16 +100,25 @@ def delete_food_item(item_id: int, db: Session = Depends(get_db)):
 
 # レシピ検索
 @app.get("/recipes/")
-def get_recipes(ingredients: str = Query(..., description="食材のリスト (カンマ区切り)")):
-    search_query = f"{ingredients} レシピ"
-    youtube_api_url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&q={search_query}&key={YOUTUBE_API_KEY}&maxResults=5&type=video"
+def get_recipes(
+    ingredients: str = Query(None, alias="ingredients"),
+    keywords: str = Query(None, alias="keywords")
+):
+    # クエリパラメータが1つもない場合、デフォルトの検索ワードを適用
+    if not ingredients and not keywords:
+        keywords = "レシピ"
+    
+    search_query = f"{keywords or ''} {ingredients or ''} レシピ".strip()
 
+    # YouTube API で動画検索
+    youtube_api_url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&q={search_query}&key={YOUTUBE_API_KEY}&maxResults=10&type=video"
+    
     response = requests.get(youtube_api_url)
     if response.status_code != 200:
         return {"error": "Failed to fetch videos"}
 
     video_data = response.json().get("items", [])
-    
+
     recipes = [
         {
             "title": item["snippet"]["title"],
@@ -112,3 +130,23 @@ def get_recipes(ingredients: str = Query(..., description="食材のリスト (�
 
     return recipes
 
+
+router = APIRouter()
+
+@router.post("/favorites/")
+def add_favorite(video_url: str, title: str, thumbnail_url: str, db: Session = Depends(database.get_db)):
+    existing_favorite = db.query(models.Favorite).filter(models.Favorite.video_url == video_url).first()
+    if existing_favorite:
+        raise HTTPException(status_code=400, detail="Already in favorites")
+    return crud.add_favorite(db, video_url, title, thumbnail_url)
+
+@router.get("/favorites/")
+def get_favorites(db: Session = Depends(database.get_db)):
+    return crud.get_favorites(db)
+
+@router.delete("/favorites/{video_url}")
+def remove_favorite(video_url: str, db: Session = Depends(database.get_db)):
+    favorite = crud.remove_favorite(db, video_url)
+    if not favorite:
+        raise HTTPException(status_code=404, detail="Not found")
+    return {"message": "Favorite removed"}

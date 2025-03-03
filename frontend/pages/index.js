@@ -7,8 +7,9 @@ import "../styles/globals.css";
 
 const FridgeManagement = () => {
   const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(false); // 検索中の状態
-  const [selectedItems, setSelectedItems] = useState([]); // 検索対象の食材
+  const [selectedItems, setSelectedItems] = useState([]); // 選択された食材のID
+  const [searchQuery, setSearchQuery] = useState(""); // キーワード入力用
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -34,31 +35,62 @@ const FridgeManagement = () => {
     setItems((prevItems) => prevItems.filter((item) => item.id !== itemId));
   };
 
-  const handleSelectItem = (itemName) => {
+  // 食材選択のハンドラー
+  const handleItemSelection = (itemId) => {
     setSelectedItems((prev) =>
-      prev.includes(itemName)
-        ? prev.filter((name) => name !== itemName)
-        : [...prev, itemName]
+      prev.includes(itemId) ? prev.filter((id) => id !== itemId) : [...prev, itemId]
     );
   };
 
+  // レシピ検索処理
   const handleSearchRecipes = async () => {
-    setLoading(true); // 検索中の状態をON
+    setLoading(true);
     try {
-      const ingredients = selectedItems.length > 0 ? selectedItems.join(",") : items.map((item) => item.name).join(",");
-      await axios.get(`http://127.0.0.1:8000/recipes/?ingredients=${ingredients}`);
-      router.push(`/recipes?ingredients=${encodeURIComponent(ingredients)}`); // クエリパラメータを追加
+        const selectedIngredientNames = items
+            .filter((item) => selectedItems.includes(item.id))
+            .map((item) => item.name);
+
+        const query = searchQuery.trim();
+
+        if (!query && selectedIngredientNames.length === 0) {
+            alert("検索ワードを入力するか、食材を選択してください。");
+            setLoading(false);
+            return;
+        }
+
+        let params = new URLSearchParams();
+        if (query) params.append("keywords", query);
+        if (selectedIngredientNames.length > 0) {
+            selectedIngredientNames.forEach((ingredient) => params.append("ingredients", ingredient));
+        }
+
+        // ここでフロントエンド側のURLにパラメータを追加して遷移
+        router.push(`/recipes?${params.toString()}`);
     } catch (error) {
-      console.error("Error fetching recipes:", error);
+        console.error("レシピの検索中にエラーが発生しました:", error);
+        alert("レシピの検索中にエラーが発生しました。");
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };  
+};
 
   return (
     <div className="container">
       <h1>冷蔵庫の管理</h1>
-  
+
+      {/* 検索ワード入力 */}
+      <input
+        type="text"
+        placeholder="検索ワードを入力（例: 和風, スープ）"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="search-input"
+      />
+
+      <button className="nav-btn" onClick={() => router.push("/favorites")}>
+        ⭐ お気に入り一覧
+      </button>
+
       {/* PCでもスマホでも適切な位置にボタンを配置 */}
       {loading ? (
         <p className="loading-text">レシピを検索中...</p>
@@ -67,22 +99,31 @@ const FridgeManagement = () => {
           レシピを検索
         </button>
       )}
-  
+
       <AddFridgeItemForm setItems={setItems} />
+
+      {/* 食材リスト（選択用チェックボックス付き） */}
       <ul className="fridge-list">
         {items.map((item) => (
           <li key={item.id} className="fridge-item">
-            <input
-              type="checkbox"
-              checked={selectedItems.includes(item.name)}
-              onChange={() => handleSelectItem(item.name)}
-            />
-            <FridgeItem item={item} onUpdate={updateItem} onDelete={deleteItem} />
+            <label>
+              <input
+                type="checkbox"
+                checked={selectedItems.includes(item.id)}
+                onChange={() => handleItemSelection(item.id)}
+              />
+              {item.name} - {item.quantity} {item.unit}
+            </label>
+            <div>
+              <button onClick={() => updateItem({ ...item, quantity: item.quantity + 1 })} className="increase">＋</button>
+              <button onClick={() => updateItem({ ...item, quantity: Math.max(item.quantity - 1, 0) })} className="decrease">－</button>
+              <button onClick={() => deleteItem(item.id)} className="delete">🗑</button>
+            </div>
           </li>
         ))}
       </ul>
     </div>
-  );  
+  );
 };
 
 export default FridgeManagement;

@@ -1,7 +1,7 @@
 import React from "react";
 import axios from "axios";
 
-const FridgeItem = ({ item, onUpdate, onDelete }) => {
+const FridgeItem = ({ item, onUpdate, onDelete, onToggleSelect, isSelected }) => {
   const handleIncrease = async () => {
     try {
       const response = await axios.patch(`http://127.0.0.1:8000/fridge_items/${item.id}/increase/`);
@@ -30,7 +30,10 @@ const FridgeItem = ({ item, onUpdate, onDelete }) => {
   };
 
   return (
-    <li className="fridge-item">
+    <li 
+      className={`fridge-item ${isSelected ? "selected" : ""}`} 
+      onClick={onToggleSelect}
+    >
       <span>{item.name} - {item.quantity} {item.unit}</span>
       <div>
         <button onClick={handleIncrease} className="increase">＋</button>
